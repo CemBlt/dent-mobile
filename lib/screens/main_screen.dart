@@ -1,29 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/navigation_provider.dart';
+import '../services/event_service.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart';
 import 'appointments_screen.dart';
+import 'home_screen.dart';
 import 'profile_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const AppointmentsScreen(),
-    const ProfileScreen(),
+class _MainScreenState extends ConsumerState<MainScreen> {
+  static const List<Widget> _screens = [
+    HomeScreen(),
+    AppointmentsScreen(),
+    ProfileScreen(),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    AppEventService.log('app_opened');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ref = this.ref;
+    final currentIndex = ref.watch(navigationIndexProvider);
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: _screens[currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppTheme.white,
@@ -36,11 +46,15 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+          currentIndex: currentIndex,
           onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
+            if (currentIndex != index) {
+              AppEventService.log(
+                'navigation_tab_changed',
+                properties: {'target_index': index},
+              );
+              ref.read(navigationIndexProvider.notifier).state = index;
+            }
           },
           type: BottomNavigationBarType.fixed,
           backgroundColor: AppTheme.white,
@@ -72,5 +86,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-
 
